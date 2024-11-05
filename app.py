@@ -1,4 +1,4 @@
-from demo.demo import app
+from demo.demo import app, compute_raw_score
 
 if __name__ == "__main__":
     # Launch the Gradio interface

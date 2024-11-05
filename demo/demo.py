@@ -12,11 +12,17 @@ def count_tokens(text):
     return len(TOKENIZER(text).input_ids)
 
 
+def compute_raw_score(input_str):
+    return BINO.compute_score(input_str)
+
+
 def run_detector(input_str):
     if count_tokens(input_str) < MINIMUM_TOKENS:
         gr.Warning(f"Too short length. Need minimum {MINIMUM_TOKENS} tokens to run Binoculars.")
-        return ""
-    return f"{BINO.predict(input_str)}"
+        return "", ""
+    prediction = BINO.predict(input_str)
+    raw_score = compute_raw_score(input_str)
+    return f"{prediction}", f"Raw Score: {raw_score}"
 
 
 def change_mode(mode):
@@ -27,13 +33,6 @@ def change_mode(mode):
     else:
         gr.Error(f"Invalid mode selected.")
     return mode
-
-
-# def load_set(progress=gr.Progress()):
-#     tokens = [None] * 24
-#     for count in progress.tqdm(tokens, desc="Counting Tokens..."):
-#         time.sleep(0.01)
-#     return ["Loaded"] * 2
 
 
 css = """
@@ -50,8 +49,6 @@ css = """
   color: #000; /* Set the desired text color */
 }
 """
-
-# Most likely human generated, #most likely AI written
 
 capybara_problem = '''Dr. Capy Cosmos, a capybara unlike any other, astounded the scientific community with his groundbreaking research in astrophysics. With his keen sense of observation and unparalleled ability to interpret cosmic data, he uncovered new insights into the mysteries of black holes and the origins of the universe. As he peered through telescopes with his large, round eyes, fellow researchers often remarked that it seemed as if the stars themselves whispered their secrets directly to him. Dr. Cosmos not only became a beacon of inspiration to aspiring scientists but also proved that intellect and innovation can be found in the most unexpected of creatures.'''
 
@@ -72,7 +69,6 @@ with gr.Blocks(css=css,
     with gr.Row():
         input_box = gr.Textbox(value=capybara_problem, placeholder="Enter text here", lines=8, label="Input Text", )
     with gr.Row():
-        # dropdown option for mode
         dropdown_mode = gr.Dropdown(["Low False Positive Rate", "High Accuracy"],
                                     label="Mode",
                                     show_label=True,
@@ -82,6 +78,7 @@ with gr.Blocks(css=css,
         clear_button = gr.ClearButton()
     with gr.Row():
         output_text = gr.Textbox(label="Prediction", value="Most likely AI-Generated")
+        raw_score_text = gr.Textbox(label="Raw Score", value="")
 
     with gr.Row():
         gr.HTML("<p><p><p>")
@@ -124,9 +121,6 @@ with gr.Blocks(css=css,
             """
         )
 
-    # confidence_bar = gr.Label(value={"Confidence": 0})
-
-    # clear_button.click(lambda x: input_box., )
-    submit_button.click(run_detector, inputs=input_box, outputs=output_text)
-    clear_button.click(lambda: ("", ""), outputs=[input_box, output_text])
+    submit_button.click(run_detector, inputs=input_box, outputs=[output_text, raw_score_text])
+    clear_button.click(lambda: ("", "", ""), outputs=[input_box, output_text, raw_score_text])
     dropdown_mode.change(change_mode, inputs=[dropdown_mode], outputs=[dropdown_mode])
